@@ -1,0 +1,86 @@
+#import os
+import re
+
+def remove_leading_numbers(filename):
+    # Remove leading numbers followed by a period from the filename
+    return re.sub(r'^\d+\.\s*', '', filename)
+
+def normalize_spacing(filename):
+    # Replace multiple spaces with a single space
+    return re.sub(r'\s+', ' ', filename)
+
+def remove_quotes_from_filename(filename):
+    # Remove single or double quotes from the filename
+    return filename.replace("'", "").replace('"', '')
+
+def remove_descriptors_from_filename(filename):
+    # Remove descriptors enclosed in parentheses and brackets from the filename
+    filename = re.sub(r'\([^)]*\)|\[[^\]]*\]', '', filename)
+    # Remove years from filename
+    return re.sub(r'\b\d{4}\b', '', filename)
+
+def capitalize_each_word(s):
+    # Capitalize each word in a string
+    return ' '.join(word.capitalize() for word in s.split())
+
+def update_filename(directory, old_filename):
+    # Remove leading numbers from the filename
+    new_filename = remove_leading_numbers(old_filename)
+    
+    # Remove quotes from the filename
+    new_filename = remove_quotes_from_filename(new_filename)
+
+    # Normalize spacing in the filename
+    new_filename = normalize_spacing(new_filename)
+
+    # Remove descriptors and years from the filename
+    new_filename = remove_descriptors_from_filename(new_filename)
+
+    # Remove trailing and leading whitespaces
+    new_filename = new_filename.strip()
+    try:
+        # Split the filename by "-"
+        parts = new_filename.split(" - ")
+
+        # Check if there are more than two parts separated by "-"
+        if len(parts) > 2:
+            # Remove everything after the second "-"
+            new_filename = " - ".join(parts[:2])
+        
+        # Capitalize each word in artist and track name
+        artist, track = new_filename.split(" - ", 1)
+        artist = capitalize_each_word(artist.strip())
+        track = capitalize_each_word(track.strip())
+
+        # Construct the new filename
+        new_filename = f"{artist} - {track}"
+
+        # Rename the file only if the filename has changed
+        if new_filename != old_filename:
+            os.rename(os.path.join(directory, old_filename), os.path.join(directory, new_filename))
+            print(f"Filename updated: {old_filename} -> {new_filename}")
+        return new_filename
+    except:
+        pass
+
+def populate_metadata_for_directory(directory):
+    # Supported audio file extensions by mutagen
+    supported_extensions = ['.mp3', '.flac', '.ogg', '.opus', '.m4a', '.aiff', '.wav', '.wma', '.dsf', '.ape']
+
+    # Iterate over all files in the directory
+    for filename in os.listdir(directory):
+        if any(filename.endswith(ext) for ext in supported_extensions):
+            # Update the filename
+            update_filename(directory, filename)
+
+# Specify the directory to process
+target_directory = "/CHANGE/TO/YOUR/DIRECTORY"
+
+# Call the function to process all tracks in the specified directory
+populate_metadata_for_directory(target_directory)
+
+
+
+
+
+
